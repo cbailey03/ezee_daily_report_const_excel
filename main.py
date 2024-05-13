@@ -109,8 +109,34 @@ def main():
     total_permit_df.rename(columns={'Cycle_Time': 'Avg. Cycle Time'}, inplace=True)
 
     # activated permits
-    filtered_permits = permit_df[permit_df['STATUS'] == 'Activated']
-    activated_permits = filtered_permits[['PROJECT_NAME', 'WORK_ORDER_ID', 'STATUS']].copy()
+    active_filter_permits = permit_df[permit_df['STATUS'] == 'Activated']
+    activated_permits = active_filter_permits[['PROJECT_NAME', 'WORK_ORDER_ID', 'STATUS', 'APPROVING_AUTHORITY']].copy()
+    active_permits_by_auth = activated_permits.groupby(by=['APPROVING_AUTHORITY']).size().reset_index(name = 'Activated_Permits')
+
+    # approved permits
+    approved_filter_permits = permit_df[permit_df['STATUS'] == 'Approved']
+    approved_permits = approved_filter_permits[['PROJECT_NAME', 'WORK_ORDER_ID', 'STATUS', 'APPROVING_AUTHORITY']].copy()
+    approved_permits_by_auth = approved_permits.groupby(by=['APPROVING_AUTHORITY']).size().reset_index(name = 'Approved_Permits')
+
+    # submitted permits
+    submitted_filter_permits = permit_df[permit_df['STATUS'] == 'Submitted']
+    submitted_permits = submitted_filter_permits[['PROJECT_NAME', 'WORK_ORDER_ID', 'STATUS', 'APPROVING_AUTHORITY']].copy()
+    submitted_permits_by_auth = submitted_permits.groupby(by=['APPROVING_AUTHORITY']).size().reset_index(name = 'Submitted_Permits')
+
+    total_permit_df = pd.merge(
+        total_permit_df, 
+        active_permits_by_auth, 
+        on=['APPROVING_AUTHORITY'], how='outer')
+    
+    total_permit_df = pd.merge(
+        total_permit_df, 
+        approved_permits_by_auth, 
+        on=['APPROVING_AUTHORITY'], how='outer')
+    
+    total_permit_df = pd.merge(
+        total_permit_df, 
+        submitted_permits_by_auth, 
+        on=['APPROVING_AUTHORITY'], how='outer')
 
     # Total Length
     total_length_df = span_df.groupby(by=['PROJECT_NAME', 'WORK_ORDER_ID'])['CALCULATED_LENGTH'].sum().reset_index()
